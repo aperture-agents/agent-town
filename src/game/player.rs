@@ -30,7 +30,7 @@ impl Player {
             id,
             name,
             role,
-            alive
+            alive,
         }
     }
 }
@@ -49,7 +49,7 @@ pub enum Role {
     VILLAGER,
     MAFIA,
     DETECTIVE,
-    DOCTOR
+    DOCTOR,
 }
 
 impl Role {
