@@ -13,6 +13,7 @@
 ///     name:   The Player's readible name.
 ///     role:   The Player's role in the Mafia game.
 ///     alive:  The Player's alive status.
+#[expect(dead_code)] // Not Used Yet - dead_code
 pub struct Player {
     id: u32,
     name: String,
@@ -25,6 +26,7 @@ impl Player {
     ///
     /// Creates a new instance of player.
     ///
+    #[expect(dead_code)] // Not Used Yet - dead_code
     pub fn new(id: u32, name: String, role: Role, alive: bool) -> Self {
         Self {
             id,
@@ -40,16 +42,17 @@ impl Player {
 /// The various Player Roles in Mafia, Roles dictate a Player's actions in the game
 ///
 /// Roles:
-///     VILLAGER - They are 'innocent', works to find MAFIA members and vote them out.
-///     MAFIA - A Member of the MAFIA, votes to kill players.
-///     DETECTIVE - A unique VILLAGER-Adjacent Role that can sniff out another Players Role.
-///     DOCTOR - A unique VILLAGER-Adjacent Role who can chose to save a Player each round.
+///     Villager - They are 'innocent', works to find Mafia members and vote them out.
+///     Mafia - A Member of the MAFIA, votes to kill players.
+///     Detective - A unique Villager-Adjacent Role that can sniff out another Players Role.
+///     Doctor - A unique Villager-Adjacent Role who can chose to save a Player each round.
 ///
+#[expect(dead_code)] // Not Used Yet - dead_code
 pub enum Role {
-    VILLAGER,
-    MAFIA,
-    DETECTIVE,
-    DOCTOR,
+    Villager,
+    Mafia,
+    Detective,
+    Doctor,
 }
 
 impl Role {
@@ -57,14 +60,15 @@ impl Role {
     ///
     /// Role-specific Round Action.
     ///
-    /// ex: VILLAGER votes, DOCTOR saves, etc.
+    /// ex: Villager votes, Doctor saves, etc.
     ///
+    #[expect(dead_code)] // Not Used Yet - DeadCode
     fn act(&self) {
         match self {
-            Role::VILLAGER => todo!(),
-            Role::MAFIA => todo!(),
-            Role::DETECTIVE => todo!(),
-            Role::DOCTOR => todo!(),
+            Role::Villager => todo!(),
+            Role::Mafia => todo!(),
+            Role::Detective => todo!(),
+            Role::Doctor => todo!(),
         }
     }
 }
