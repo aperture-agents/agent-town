@@ -46,13 +46,20 @@ impl Player {
     ///
     /// Creates a new instance of player.
     ///
-    #[expect(dead_code)] // Not Used Yet - dead_code
-    pub fn new(id: u32, name: String, role: Role, alive: bool) -> Self {
+    /// Args:
+    ///     id: Unique u32 to identify the player by.
+    ///     name: The Player's name.
+    ///     role: The Player's Role.
+    ///
+    /// Returns:
+    ///     Self: a new instance of Self.
+    ///
+    pub fn new(id: u32, name: String, role: Role) -> Self {
         Self {
             id,
             name,
             role,
-            alive,
+            alive: true,
         }
     }
 
@@ -61,6 +68,12 @@ impl Player {
     /// Role-specific Round Action.
     ///
     /// ex: Villager votes, Doctor saves, etc.
+    ///
+    /// Args:
+    ///     target: Player to target with our action.
+    ///
+    /// Returns:
+    ///     Action: The completed Action for our Role.
     ///
     fn act(&self, target: Player) -> Action {
         match self.role {
@@ -71,7 +84,6 @@ impl Player {
         }
     }
 }
-
 
 /// Action
 ///

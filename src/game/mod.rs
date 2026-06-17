@@ -5,6 +5,6 @@
 //! IE: Player, Role, GameState, Phase, etc
 //!
 
-mod player;
-mod state;
-mod chat;
+pub mod player;
+pub mod state;
+pub mod chat;

@@ -5,8 +5,7 @@
 //! Contains structs and logic related to maintaining the game state.
 //!
 
-
-use crate::game::player::{Player, Action, Vote};
+use crate::game::player::{Player, Action};
 use crate::game::chat::Chat;
 
 /// GamePhase
@@ -17,12 +16,13 @@ use crate::game::chat::Chat;
 ///     Discussion: Phase when players discuss what to do.
 ///     Voting: Short Phase when players vote out a player.
 ///     Night: Short Phase when unique roles chose their targets.
+///     Start: Start of the game, rules and role assignemnts.
 ///
-
-enum GamePhase {
+pub enum GamePhase {
     Discussion,
     Voting,
     Night,
+    Start,
 }
 
 /// GameState
@@ -34,10 +34,52 @@ enum GamePhase {
 ///     players:    A List of Players.
 ///     rounds:     A List of round history.
 ///
-struct GameState {
-    phase: GamePhase,
-    players: Vec<Player>,
-    prev_rounds: Vec<Round>
+pub struct GameState {
+    pub phase: GamePhase,
+    pub players: Vec<Player>,
+    pub prev_rounds: Vec<Round>,
+    pub num_mafia: u32,
+}
+
+impl GameState {
+    /// new()
+    ///
+    /// Creates a new instance of the GameState.
+    ///
+    /// Will Prompt the User for num_mafia.
+    /// Will prompt the user for player names until:
+    ///     - All roles assigned (1 detective, 1 doctor, num_mafia, >=1 villager)
+    ///     - Mafia doesnt instantly win (#mafia == #!mafia).
+    ///
+    /// Args:
+    ///     players: List of Players.
+    ///
+    /// Returns:
+    ///     GameState - new GameState instance.
+    ///
+    pub fn new() -> Self {
+        // Prompt user for number of mafia
+        let num_mafia = todo!();
+
+        // Prompt to create our players
+        let players = todo!();
+
+        Self {
+            phase: GamePhase::Start,
+            players: players,
+            prev_rounds: Vec::new(),
+            num_mafia: num_mafia,
+        }
+    }
+
+    /// start_game()
+    ///
+    /// Start of the game activities.
+    ///     - Show Players their roles.
+    ///     - Explain the rules of the game.
+    ///     - Begin Discussion Phase.
+    ///
+    pub fn start_game(&mut self) {}
 }
 
 /// Round
@@ -46,11 +88,9 @@ struct GameState {
 ///
 /// Args:
 ///     chat:   The chat instance for this round.
-///     votes:  The voting record for this round.
-///     acts:   The record of actions for this round using a trait object here.
+///     acts:   The record of actions for this round.
 ///
 struct Round {
     chat: Chat,
-    votes: Vec<Vote>,
-    acts: Vec<Box<dyn Action>>,
+    acts: Vec<Action>,
 }
