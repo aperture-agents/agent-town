@@ -3,6 +3,25 @@
 //! Player module
 //!
 //! Contains structs and logic related to game players.
+//!
+
+/// Role
+///
+/// The various Player Roles in Mafia, Roles dictate a Player's actions in the game
+///
+/// Roles:
+///     Villager - They are 'innocent', works to find Mafia members and vote them out.
+///     Mafia - A Member of the MAFIA, votes to kill players.
+///     Detective - A unique Villager-Adjacent Role that can sniff out another Players Role.
+///     Doctor - A unique Villager-Adjacent Role who can chose to save a Player each round.
+///
+#[expect(dead_code)] // Not Used Yet - dead_code
+pub enum Role {
+    Villager,
+    Mafia,
+    Detective,
+    Doctor,
+}
 
 /// Player
 ///
@@ -13,6 +32,7 @@
 ///     name:   The Player's readible name.
 ///     role:   The Player's role in the Mafia game.
 ///     alive:  The Player's alive status.
+///
 #[expect(dead_code)] // Not Used Yet - dead_code
 pub struct Player {
     id: u32,
@@ -35,40 +55,37 @@ impl Player {
             alive,
         }
     }
-}
 
-/// Role
-///
-/// The various Player Roles in Mafia, Roles dictate a Player's actions in the game
-///
-/// Roles:
-///     Villager - They are 'innocent', works to find Mafia members and vote them out.
-///     Mafia - A Member of the MAFIA, votes to kill players.
-///     Detective - A unique Villager-Adjacent Role that can sniff out another Players Role.
-///     Doctor - A unique Villager-Adjacent Role who can chose to save a Player each round.
-///
-#[expect(dead_code)] // Not Used Yet - dead_code
-pub enum Role {
-    Villager,
-    Mafia,
-    Detective,
-    Doctor,
-}
-
-impl Role {
     /// act()
     ///
     /// Role-specific Round Action.
     ///
     /// ex: Villager votes, Doctor saves, etc.
     ///
-    #[expect(dead_code)] // Not Used Yet - DeadCode
-    fn act(&self) {
-        match self {
-            Role::Villager => todo!(),
-            Role::Mafia => todo!(),
-            Role::Detective => todo!(),
-            Role::Doctor => todo!(),
+    fn act(&self, target: Player) -> Action {
+        match self.role {
+            Role::Villager => Action::Vote { voter: self.id, candidate: target.id },
+            Role::Mafia => Action::Kill { killer: self.id, victim: target.id },
+            Role::Detective => Action::Investigate { sleuth: self.id, suspect: target.id },
+            Role::Doctor => Action::Save { doctor: self.id, patient: target.id },
         }
     }
+}
+
+
+/// Action
+///
+/// Representation of a Game Action.
+///
+/// Variants
+///     Vote: Universal action for casting a vote.
+///     Kill: Mafia Action for killing a player.
+///     Ivestigate: Detective Action for investigating a players role.
+///     Save: Doctor Action for saving a player from a mafia kill.
+///
+pub enum Action {
+    Vote { voter: u32, candidate: u32 },
+    Kill { killer: u32, victim: u32 },
+    Investigate { sleuth: u32, suspect: u32 },
+    Save { doctor: u32, patient: u32 },
 }
