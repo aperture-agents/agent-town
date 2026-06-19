@@ -5,6 +5,8 @@
 //! Contains structs and logic related to maintaining the game state.
 //!
 
+use std::io::{self, Read};
+
 use crate::game::player::{Player, Action};
 use crate::game::chat::Chat;
 
@@ -58,11 +60,34 @@ impl GameState {
     ///     GameState - new GameState instance.
     ///
     pub fn new() -> Self {
-        // Prompt user for number of mafia
-        let num_mafia = todo!();
+        // Prompt for the number of Mafia
+        let num_mafia = prompt_num_mafia();
 
         // Prompt to create our players
-        let players = todo!();
+        // Minimum # of Villagers to ensure Mafia CANNOT have Majority at Start
+        // Minimum # of Players to ensure Num Mafia can be fullfilled, 2 special roles,
+        // And # of Villagers is enough to ensure Mafia CANNOT have Majority at Start.
+        let mut names = Vec::new();
+        let min_villagers: usize = num_mafia - 2;
+        let min_players: usize = min_villagers + 2 + num_mafia;
+        loop {
+            println!("Enter the name of player #{} or Enter to Stop", names.len()+1);
+            match input.trim() {
+                "" => {
+                    // Determine if the current list satisfies acceptable player count
+                    if names.len() < min_players {
+                        println!("You currently do not fulfill the acceptable minimal player count of: {}, add more players", min_players);
+                        continue;
+                    } else {
+                        break;
+                    }
+                },
+                name => names.push(String::from(name)),
+            }
+        }
+
+        // Create players and assign roles
+       let players = assign_roles();
 
         Self {
             phase: GamePhase::Start,
@@ -79,8 +104,57 @@ impl GameState {
     ///     - Explain the rules of the game.
     ///     - Begin Discussion Phase.
     ///
-    pub fn start_game(&mut self) {}
+    pub fn start_game(&mut self) {
+
+    }
 }
+
+/// prompt_num_mafia()
+///
+/// Helper function to prompt the user for the number of mafia players to create.
+///
+/// Returns:
+///     The number of requested mafia players.
+///
+fn prompt_num_mafia() -> usize {
+    println!("Enter the number of Mafia");
+    let mut input = String::new();
+    loop {
+        io::stdin().read_line(&mut input).expect("Failed to Read Line");
+        match input.trim().parse() {
+            Ok(n) => return n,
+            Err(_) => {
+                println!("Please enter a valid number");
+                input.clear();
+                continue;
+            }
+        };
+    };
+}
+
+/// prompt_player_names()
+///
+
+
+
+/// assign_roles()
+///
+/// Helper function to create Players and randomly assign them roles.
+/// One Person will be Doctor.
+/// One Person will be Detective.
+/// Create num_mafia Mafia Members.
+/// The rest are assgned Villager.
+///
+/// This function assumes there are enough names provided to achieve the above conditions.
+///
+/// Args:
+///     names: The provided player names.
+///     num_mafia: The number of mafia players to make.
+///
+/// Returns:
+///     A list of created Players
+///
+fn assign_roles(names: Vec<String>, num_mafia: usize) -> Vec<Player> {}
 
 /// Round
 ///
