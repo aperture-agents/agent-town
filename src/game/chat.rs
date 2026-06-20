@@ -1,2 +1,7 @@
-#[expect(dead_code)] // No IMPL Yet...
 pub struct Chat {}
+
+impl Chat {
+    pub fn new() -> Self {
+        todo!()
+    }
+}

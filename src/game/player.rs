@@ -14,13 +14,14 @@
 ///     Mafia - A Member of the MAFIA, votes to kill players.
 ///     Detective - A unique Villager-Adjacent Role that can sniff out another Players Role.
 ///     Doctor - A unique Villager-Adjacent Role who can chose to save a Player each round.
+///     Unassigned - Player has not been assigned a role yet.
 ///
-#[expect(dead_code)] // Not Used Yet - dead_code
 pub enum Role {
     Villager,
     Mafia,
     Detective,
     Doctor,
+    Unassigned,
 }
 
 /// Player
@@ -33,11 +34,10 @@ pub enum Role {
 ///     role:   The Player's role in the Mafia game.
 ///     alive:  The Player's alive status.
 ///
-#[expect(dead_code)] // Not Used Yet - dead_code
 pub struct Player {
-    id: u32,
+    id: usize,
     name: String,
-    role: Role,
+    pub role: Role,
     alive: bool,
 }
 
@@ -47,14 +47,14 @@ impl Player {
     /// Creates a new instance of player.
     ///
     /// Args:
-    ///     id: Unique u32 to identify the player by.
+    ///     id: Unique usize to identify the player by.
     ///     name: The Player's name.
     ///     role: The Player's Role.
     ///
     /// Returns:
     ///     Self: a new instance of Self.
     ///
-    pub fn new(id: u32, name: String, role: Role) -> Self {
+    pub fn new(id: usize, name: String, role: Role) -> Self {
         Self {
             id,
             name,
@@ -77,10 +77,23 @@ impl Player {
     ///
     fn act(&self, target: Player) -> Action {
         match self.role {
-            Role::Villager => Action::Vote { voter: self.id, candidate: target.id },
-            Role::Mafia => Action::Kill { killer: self.id, victim: target.id },
-            Role::Detective => Action::Investigate { sleuth: self.id, suspect: target.id },
-            Role::Doctor => Action::Save { doctor: self.id, patient: target.id },
+            Role::Villager => Action::Vote {
+                voter: self.id,
+                candidate: target.id,
+            },
+            Role::Mafia => Action::Kill {
+                killer: self.id,
+                victim: target.id,
+            },
+            Role::Detective => Action::Investigate {
+                sleuth: self.id,
+                suspect: target.id,
+            },
+            Role::Doctor => Action::Save {
+                doctor: self.id,
+                patient: target.id,
+            },
+            Role::Unassigned => panic!(), // Shouldnt be possible during a game
         }
     }
 }
@@ -96,8 +109,8 @@ impl Player {
 ///     Save: Doctor Action for saving a player from a mafia kill.
 ///
 pub enum Action {
-    Vote { voter: u32, candidate: u32 },
-    Kill { killer: u32, victim: u32 },
-    Investigate { sleuth: u32, suspect: u32 },
-    Save { doctor: u32, patient: u32 },
+    Vote { voter: usize, candidate: usize },
+    Kill { killer: usize, victim: usize },
+    Investigate { sleuth: usize, suspect: usize },
+    Save { doctor: usize, patient: usize },
 }
