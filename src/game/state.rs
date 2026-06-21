@@ -7,6 +7,7 @@
 
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+use std::collections::HashMap;
 use std::io;
 
 use crate::game::chat::Chat;
@@ -145,8 +146,40 @@ impl GameState {
     ///
     /// Allow players to cast votes and log them.
     /// Optionally eliminate a Player if voted majority.
+    /// TODO: Maybe record the votes in the round information?
     ///
-    fn start_voting(&mut self) {}
+    fn start_voting(&mut self) {
+        // Allow each player to vote
+        let mut votes = Vec::new();
+        for player in &self.players {
+            votes.push(player.vote(&self.players));
+        }
+
+        // Tally the votes in a map
+        let mut map = HashMap::new();
+        for vote in &votes {
+            if let Some(player) = vote {
+                *map.entry(player.id).or_insert(0) += 1;
+            }
+        }
+
+        // Announce a death if there is one and remove the player
+        let death = map.iter().max_by_key(|(_, v)| *v);
+        if let Some((id, votes)) = death {
+            let dead_player = self.players.iter().find(|p| p.id == *id).expect("Failed to find dead player - BUG");
+            println!("Player {} received {} votes, and is eliminated.", dead_player.name, votes);
+            dead_player.kill();
+
+        } else {
+            println!("No one was voted out...");
+        }
+
+        // Check if the game should end - maybe mafia won
+        self.is_game_over();
+
+        // Set the phase to Night Time
+        self.phase = GamePhase::Night;
+    }
 
     /// is_game_over()
     ///

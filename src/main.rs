@@ -16,7 +16,7 @@ fn main() {
     // Start the game
     game_state.start_game();
 
-    // Run Game Loop
+    // Run Game Loop - maybe use match instead?
     loop {
         // Hold Discussion Period
 
