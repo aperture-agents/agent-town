@@ -18,12 +18,46 @@ use std::io;
 ///     Doctor - A unique Villager-Adjacent Role who can chose to save a Player each round.
 ///     Unassigned - Player has not been assigned a role yet.
 ///
+#[derive(PartialEq, Clone)]
 pub enum Role {
     Villager,
     Mafia,
     Detective,
     Doctor,
     Unassigned,
+}
+
+/// Action
+///
+/// Representation of a Game Action.
+///
+/// Variants
+///     Vote: Universal action for casting a vote.
+///     Kill: Mafia Action for killing a player.
+///     Investigate: Detective Action for investigating a players role.
+///     Save: Doctor Action for saving a player from a mafia kill.
+///
+pub enum Action {
+    Vote { voter: usize, candidate: usize },
+    Kill { killer: usize, victim: usize },
+    Investigate { sleuth: usize, suspect: usize },
+    Save { doctor: usize, patient: usize },
+}
+
+/// ActionType
+///
+/// Represents the types of Actions a player can make.
+///
+/// Variants
+///     Vote: Voting for another player.
+///     Kill: Mafia action to kill another player.
+///     Investigate: Detective action to investigate a players role.
+///     Save: Doctor action to for saving another player from a mafia kill.
+pub enum ActionType {
+    Vote,
+    Kill,
+    Investigate,
+    Save
 }
 
 /// Player
@@ -42,6 +76,7 @@ pub enum Role {
 ///     role:   The Player's role in the Mafia game.
 ///     alive:  The Player's alive status.
 ///
+#[derive(Clone)]
 pub struct Player {
     pub id: usize,
     pub name: String,
@@ -74,8 +109,8 @@ impl Player {
     /// vote()
     ///
     /// Function to handle Player voting.
-    /// Players can abstain a vote by passing 999.
     /// We ensure that the vote is valid and parseable.
+    /// Ensure that the player cannot vote for themselves.
     ///
     /// Args:
     ///  players: list of players to vote for.
@@ -83,11 +118,20 @@ impl Player {
     /// Returns:
     ///  Player voted for or None if no vote.
     ///
-    pub fn vote<'a>(&self, players: &'a Vec<Player>) -> Option<&'a Player> {
-        println!("Enter the Player id of the Player you'd like to vote for, or 999 to abstain");
+    pub fn prompt<'a>(&self, action_type: ActionType, players: &'a Vec<Player>) -> &'a Player {
+        // Depending on the action display a different prompt
+        match action_type {
+            ActionType::Vote => println!("Enter the Player id of the Player you'd like to vote for"),
+            ActionType::Kill => println!("Enter the Player id of the player you'd like to kill"),
+            ActionType::Investigate => println!("Enter the player id of the player you'd like to investigate"),
+            ActionType::Save => println!("Enter the player id of the player you'd like to save"),
+        }
 
-        // Display voting options
-        for player in players {
+        // Create new list of players minus self so players cannot vote for themselves
+        let votable_players: Vec<&Player> = players.iter().filter(|p| p.id != self.id).collect();
+
+        // Display votable options
+        for player in &votable_players {
             println!("{} | {}", player.id, player.name);
         }
 
@@ -95,11 +139,12 @@ impl Player {
         let mut input = String::new();
         loop {
             input.clear();
-            io::stdin().read_line(&mut input).expect("Failed to Read Line");
+            io::stdin()
+                .read_line(&mut input)
+                .expect("Failed to Read Line");
 
             // Parse Input
             let player_id = match input.parse() {
-                Ok(999)=> return None,
                 Ok(id) => id,
                 Err(_) => {
                     println!("{}, is not a valid vote", input);
@@ -108,8 +153,8 @@ impl Player {
             };
 
             // Ensure the vote is a valid player and return
-            if let Some(player) = players.iter().find(|p| p.id == player_id) {
-                return Some(player)
+            if let Some(player) = votable_players.iter().find(|p| p.id == player_id) {
+                return player;
             } else {
                 println!("{}, is not a valid vote", input);
                 continue;
@@ -122,6 +167,7 @@ impl Player {
     /// Role-specific Round Action.
     ///
     /// ex: Villager votes, Doctor saves, etc.
+    /// Players should not be able to act on themselves.
     ///
     /// Args:
     ///     target: Player to target with our action.
@@ -129,39 +175,49 @@ impl Player {
     /// Returns:
     ///     Action: The completed Action for our Role.
     ///
-    fn act(&self, target: Player) -> Option<Action> {
+    pub fn act(&self, players: &Vec<Player>) -> Option<Action> {
         match self.role {
             Role::Villager => None, // Villager has no special action
-            Role::Mafia => Some(Action::Kill {
+            Role::Mafia => {
+                // TODO: Allow some secret chat between mafia to decide on a hit.
+
+                // Prompt for action
+                let target = self.prompt(ActionType::Kill, players);
+
+                Some(Action::Kill {
                 killer: self.id,
                 victim: target.id,
-            }),
-            Role::Detective => Some(Action::Investigate {
+            })},
+            Role::Detective => {
+                // Prompt for action
+                let target = self.prompt(ActionType::Investigate, players);
+
+                Some(Action::Investigate {
                 sleuth: self.id,
                 suspect: target.id,
-            }),
-            Role::Doctor => Some(Action::Save {
+            })},
+            Role::Doctor => {
+                // Prompt for action
+                let target = self.prompt(ActionType::Save, players);
+
+                Some(Action::Save {
                 doctor: self.id,
                 patient: target.id,
-            }),
+            })},
             Role::Unassigned => panic!(), // Shouldnt be possible during a game
         }
     }
-}
 
-/// Action
-///
-/// Representation of a Game Action.
-///
-/// Variants
-///     Vote: Universal action for casting a vote.
-///     Kill: Mafia Action for killing a player.
-///     Ivestigate: Detective Action for investigating a players role.
-///     Save: Doctor Action for saving a player from a mafia kill.
-///
-pub enum Action {
-    Vote { voter: usize, candidate: usize },
-    Kill { killer: usize, victim: usize },
-    Investigate { sleuth: usize, suspect: usize },
-    Save { doctor: usize, patient: usize },
+    /// kill()
+    ///
+    /// Let the player know they have died.
+    /// Eliminate them from the game by setting alive = false.
+    ///
+    pub fn kill(&mut self) {
+        // TODO: Ping player that they were voted out
+        // self.ping_dead()
+
+        // Set the player to dead
+        self.alive = false;
+    }
 }

@@ -7,27 +7,20 @@
 
 mod game;
 
-use crate::game::state::GameState;
+use crate::game::state::{GamePhase, GameState};
 
 fn main() {
     // Create the game
     let mut game_state = GameState::new();
 
-    // Start the game
-    game_state.start_game();
-
-    // Run Game Loop - maybe use match instead?
+    // Run Game Loop
     loop {
-        // Hold Discussion Period
-
-        // Start Voting Phase
-
-        // Start Night Phase
-
-        // Perform Actions - Check Win Condition
-
-        // End Game or Begin Discussion Phase
-
-        // Recap Round Events (who died etc)
+        match game_state.phase {
+            GamePhase::Start => game_state.start_game(),
+            GamePhase::Discussion => game_state.start_discussion(),
+            GamePhase::Voting => game_state.start_voting(),
+            GamePhase::Night => game_state.start_night(),
+            GamePhase::GameOver => game_state.game_over(),
+        }
     }
 }

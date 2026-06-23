@@ -8,10 +8,11 @@
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::collections::HashMap;
+use std::hash::Hash;
 use std::io;
 
 use crate::game::chat::Chat;
-use crate::game::player::{Action, Player, Role};
+use crate::game::player::{Action, ActionType, Player, Role};
 
 /// GamePhase
 ///
@@ -28,6 +29,7 @@ pub enum GamePhase {
     Discussion,
     Voting,
     Night,
+    GameOver,
 }
 
 /// GameState
@@ -137,9 +139,26 @@ impl GameState {
         self.players[self.num_mafia + 1].role = Role::Detective;
 
         // Assign the rest as Villager
-        self.players[self.num_mafia + 2..].iter_mut().for_each(|player| player.role = Role::Villager);
+        self.players[self.num_mafia + 2..]
+            .iter_mut()
+            .for_each(|player| player.role = Role::Villager);
     }
 
+    /// start_discussion()
+    ///
+    /// TODO: Hold the discussion period for some number of time.
+    /// Allow players to converse in the chat and come to a decision.
+    /// Once this discussion time is over players will vote.
+    ///
+    pub fn start_discussion(&mut self) {
+        // TODO: Largely a chat item here
+        // TODO: Ping all players to begin discussing
+        // TODO: Maintain the chat
+        // TODO: Start a timer maybe 60 seconds
+
+        // Begin voting
+        self.phase = GamePhase::Voting;
+    }
     /// start_voting()
     ///
     /// Trigger voting period of the Round.
@@ -148,55 +167,136 @@ impl GameState {
     /// Optionally eliminate a Player if voted majority.
     /// TODO: Maybe record the votes in the round information?
     ///
-    fn start_voting(&mut self) {
+    pub fn start_voting(&mut self) {
         // Allow each player to vote
         let mut votes = Vec::new();
         for player in &self.players {
-            votes.push(player.vote(&self.players));
+            votes.push(player.act(&self.players));
         }
 
         // Tally the votes in a map
         let mut map = HashMap::new();
         for vote in &votes {
-            if let Some(player) = vote {
-                *map.entry(player.id).or_insert(0) += 1;
+            if let Some(Action::Vote { candidate, .. }) = vote {
+                *map.entry(*candidate).or_insert(0) += 1;
             }
         }
 
-        // Announce a death if there is one and remove the player
+        // Announce a death if there is one and kill the player
         let death = map.iter().max_by_key(|(_, v)| *v);
         if let Some((id, votes)) = death {
-            let dead_player = self.players.iter().find(|p| p.id == *id).expect("Failed to find dead player - BUG");
-            println!("Player {} received {} votes, and is eliminated.", dead_player.name, votes);
+            let dead_player = self
+                .players
+                .iter_mut()
+                .find(|p| p.id == *id)
+                .expect("Failed to find dead player - BUG");
+            println!(
+                "Player {} received {} votes, and is eliminated.",
+                dead_player.name, votes
+            );
             dead_player.kill();
-
         } else {
             println!("No one was voted out...");
         }
 
-        // Check if the game should end - maybe mafia won
-        self.is_game_over();
-
-        // Set the phase to Night Time
-        self.phase = GamePhase::Night;
+        // Check if the game should end
+        if self.is_game_over() {
+            self.phase = GamePhase::GameOver;
+        } else {
+            // If continuing = set the phase to Night
+            self.phase = GamePhase::Night;
+        }
     }
+
 
     /// is_game_over()
     ///
     /// Helper function to check if the game should end.
+    /// Counts number of alive mafia.
+    /// Counts number of alive non-mafia.
+    /// Determines if game should end (mafia >= non-mafia)
     ///
     /// The game should end if:
     ///     - All Mafia voted out.
     ///     - Mafia holds parity with non Mafia count.
+    /// Returns:
+    ///  bool if game is over over not.
     ///
-    fn is_game_over(&mut self) {}
+    fn is_game_over(&mut self) -> bool {
+        // Count number of alive players
+        let mut mafia_alive = 0;
+        let mut good_alive = 0;
+        for player in &self.players {
+            if !player.alive {
+                continue
+            }
+
+            if player.role != Role::Mafia {
+                good_alive += 1;
+            } else {
+                mafia_alive += 1;
+            }
+        }
+
+        // return result of if num mafia alive >= non mafia alive
+        mafia_alive >= good_alive
+    }
 
     /// start_night()
     ///
     /// Start the Night Phase.
     /// Allows special jobs to act().
     ///
-    fn start_night() {}
+    pub fn start_night(&mut self) {
+        let mut votes = HashMap::new();
+        let mut saved_id: Option<usize> = None;
+
+        // Allow all alive players to act if they have a special night action.
+        for player in &self.players {
+            if !player.alive {
+                continue;
+            }
+
+            if let Some(action) = player.act(&self.players) {
+                match action {
+                    Action::Vote{..} => (), // There is no voting during night
+                    Action::Kill{ victim , .. } => *votes.entry(victim).or_insert(0) += 1,
+                    Action::Save { patient , .. } => saved_id = Some(patient),
+                    Action::Investigate { suspect , .. } => {todo!("TODO: ping detective the role of {}", suspect)},
+                }
+            }
+        }
+
+        // Tally Mafia votes and extract their id
+        let dead_player_id = votes.iter().max_by_key(|(_, v)| *v).map(|(id, _)| *id);
+
+        // Check if we should kill a player
+        if saved_id != dead_player_id {
+            // Find the player and kill them
+            if let Some(dead_id) = dead_player_id {
+                let player = self.players.iter_mut().find(|p| p.id == dead_id).expect("Should find player");
+                player.kill()
+            }
+        }
+
+        // Check if the games over
+        if self.is_game_over() {
+            self.phase = GamePhase::GameOver;
+        } else {
+            // If continuing = set the phase to Night
+            self.phase = GamePhase::Discussion;
+        }
+    }
+
+    /// game_over()
+    ///
+    /// Perform the end of game operations.
+    /// Broadcast the winning role and player(s).
+    /// Set up the next game.
+    ///
+    pub fn game_over(&mut self) {
+
+    }
 }
 
 /// prompt_num_mafia()
@@ -249,7 +349,9 @@ fn prompt_players(num_mafia: usize) -> Vec<Player> {
             "Enter the name of player #{} or Enter to Stop",
             names.len() + 1
         );
-        io::stdin().read_line(&mut input).expect("Failed to Read Line");
+        io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to Read Line");
         match input.trim() {
             "" => {
                 // Determine if the current list satisfies acceptable player count
