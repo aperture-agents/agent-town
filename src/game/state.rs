@@ -1,12 +1,4 @@
-//! /src/game/state.rvoting(&mut self) {
-~                             │    3         // Allow each player to vote
-~                             │    2         let mut votes = Vec::new();
-~                             │    1         for player in &self.players {
-~                             │E 174             votes.push(player.act(self.phase, &self.players));     ■ expected &GamePhase, found GamePhase     ■■■ mismatched types  expected `&GamePhase`, found `GamePh
-~                             │    1         }
-~                             │    2
-~                             │    3         // Tally the votes in a map
-~                             │    4         let mut map = HashMap::new
+//! /src/game/state.rs
 //!
 //! State module.
 //!
@@ -15,6 +7,7 @@
 
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+use core::panic;
 use std::collections::HashMap;
 use std::io;
 
@@ -199,8 +192,8 @@ impl GameState {
                 .find(|p| p.id == *id)
                 .expect("Failed to find dead player - BUG");
             println!(
-                "Player {} received {} votes, and is eliminated.",
-                dead_player.name, votes
+                "Player {} received {} votes, and is eliminated, they were {}.",
+                dead_player.name, votes, dead_player.role
             );
             dead_player.kill();
         } else {
@@ -208,14 +201,13 @@ impl GameState {
         }
 
         // Check if the game should end
-        if self.is_game_over() {
+        if self.is_game_over().is_some() {
             self.phase = GamePhase::GameOver;
         } else {
             // If continuing = set the phase to Night
             self.phase = GamePhase::Night;
         }
     }
-
 
     /// is_game_over()
     ///
@@ -228,15 +220,14 @@ impl GameState {
     ///     - All Mafia voted out.
     ///     - Mafia holds parity with non Mafia count.
     /// Returns:
-    ///  bool if game is over over not.
+    ///  Optional Role that won
     ///
-    fn is_game_over(&mut self) -> bool {
-        // Count number of alive players
+    fn is_game_over(&mut self) -> Option<Role> {
         let mut mafia_alive = 0;
         let mut good_alive = 0;
         for player in &self.players {
             if !player.alive {
-                continue
+                continue;
             }
 
             if player.role != Role::Mafia {
@@ -246,8 +237,14 @@ impl GameState {
             }
         }
 
-        // return result of if num mafia alive >= non mafia alive
-        mafia_alive >= good_alive
+        // return result of game
+        if mafia_alive >= good_alive {
+            return Some(Role::Mafia);
+        } else if mafia_alive == 0 {
+            return Some(Role::Villager);
+        } else {
+            return None;
+        }
     }
 
     /// start_night()
@@ -265,12 +262,14 @@ impl GameState {
                 continue;
             }
 
-            if let Some(action) = player.act(&self.players) {
+            if let Some(action) = player.act(self.phase.clone(), &self.players) {
                 match action {
-                    Action::Vote{..} => (), // There is no voting during night
-                    Action::Kill{ victim , .. } => *votes.entry(victim).or_insert(0) += 1,
-                    Action::Save { patient , .. } => saved_id = Some(patient),
-                    Action::Investigate { suspect , .. } => {todo!("TODO: ping detective the role of {}", suspect)},
+                    Action::Vote { .. } => (), // There is no voting during night
+                    Action::Kill { victim, .. } => *votes.entry(victim).or_insert(0) += 1,
+                    Action::Save { patient, .. } => saved_id = Some(patient),
+                    Action::Investigate { suspect, .. } => {
+                        // todo!("TODO: ping detective the role of {}", suspect)
+                    }
                 }
             }
         }
@@ -282,13 +281,17 @@ impl GameState {
         if saved_id != dead_player_id {
             // Find the player and kill them
             if let Some(dead_id) = dead_player_id {
-                let player = self.players.iter_mut().find(|p| p.id == dead_id).expect("Should find player");
+                let player = self
+                    .players
+                    .iter_mut()
+                    .find(|p| p.id == dead_id)
+                    .expect("Should find player");
                 player.kill()
             }
         }
 
         // Check if the games over
-        if self.is_game_over() {
+        if self.is_game_over().is_some() {
             self.phase = GamePhase::GameOver;
         } else {
             // If continuing = set the phase to Night
@@ -303,7 +306,16 @@ impl GameState {
     /// Set up the next game.
     ///
     pub fn game_over(&mut self) {
+        let win = self.is_game_over();
 
+        match win {
+            Some(Role::Villager) => println!("All Mafia were voted out - Villagers win!"),
+            Some(Role::Mafia) => println!("The Mafia have secured quorum - Mafia win!"),
+            _ => panic!("Game ended incorrectly - BUG"),
+        }
+
+        // Start the game again
+        self.phase = GamePhase::Start;
     }
 }
 
@@ -334,21 +346,21 @@ fn prompt_num_mafia() -> usize {
 
 /// prompt_players()
 ///
-// Prompt to create our players
-// Minimum # of Villagers to ensure Mafia CANNOT have Majority at Start
-// Minimum # of Players to ensure Num Mafia can be fullfilled, 2 special roles,
-// And # of Villagers is enough to ensure Mafia CANNOT have Majority at Start.
-//
-// Args:
-//  num_mafia: The number of player selected Mafia roles
-//
-// Returns:
-//  List of Players that fits conditions
-//
+/// Prompt to create our players
+/// Minimum # of Villagers to ensure Mafia CANNOT have Majority at Start
+/// Minimum # of Players to ensure Num Mafia can be fullfilled, 2 special roles,
+/// And # of Villagers is enough to ensure Mafia CANNOT have Majority at Start.
+///
+/// Args:
+///  num_mafia: The number of player selected Mafia roles
+///
+/// Returns:
+///  List of Players that fits conditions
+///
 fn prompt_players(num_mafia: usize) -> Vec<Player> {
     let mut names = Vec::new();
-    let min_villagers: usize = num_mafia - 2;
-    let min_players: usize = min_villagers + 2 + num_mafia;
+    let min_villagers = num_mafia;
+    let min_players = num_mafia + min_villagers + 2;
     let mut uuid: usize = 0;
     let mut input = String::new();
     loop {

@@ -28,6 +28,18 @@ pub enum Role {
     Unassigned,
 }
 
+impl std::fmt::Display for Role {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Role::Villager => write!(f, "Villager"),
+            Role::Mafia => write!(f, "Mafia"),
+            Role::Detective => write!(f, "Detective"),
+            Role::Doctor => write!(f, "Doctor"),
+            Role::Unassigned => write!(f, "Unassigned"),
+        }
+    }
+}
+
 /// Action
 ///
 /// Representation of a Game Action.
@@ -122,14 +134,14 @@ impl Player {
     pub fn prompt<'a>(&self, action_type: ActionType, players: &'a Vec<Player>) -> &'a Player {
         // Depending on the action display a different prompt
         match action_type {
-            ActionType::Vote => println!("Enter the Player id of the Player you'd like to vote for"),
-            ActionType::Kill => println!("Enter the Player id of the player you'd like to kill"),
-            ActionType::Investigate => println!("Enter the player id of the player you'd like to investigate"),
-            ActionType::Save => println!("Enter the player id of the player you'd like to save"),
+            ActionType::Vote => println!("{}, Enter the Player id of the Player you'd like to vote for", self.name),
+            ActionType::Kill => println!("{}, Enter the Player id of the player you'd like to kill", self.name),
+            ActionType::Investigate => println!("{} Enter the player id of the player you'd like to investigate", self.name),
+            ActionType::Save => println!("{}, Enter the player id of the player you'd like to save", self.name),
         }
 
-        // Create new list of players minus self so players cannot vote for themselves
-        let votable_players: Vec<&Player> = players.iter().filter(|p| p.id != self.id).collect();
+        // Create new list of players minus self and dead players so players cannot vote for themselves
+        let votable_players: Vec<&Player> = players.iter().filter(|p| p.id != self.id && p.alive).collect();
 
         // Display votable options
         for player in &votable_players {
@@ -145,10 +157,10 @@ impl Player {
                 .expect("Failed to Read Line");
 
             // Parse Input
-            let player_id = match input.parse() {
+            let player_id = match input.trim().parse() {
                 Ok(id) => id,
                 Err(_) => {
-                    println!("{}, is not a valid vote", input);
+                    println!("{}, is not a valid vote", input.trim());
                     continue;
                 }
             };
@@ -157,7 +169,7 @@ impl Player {
             if let Some(player) = votable_players.iter().find(|p| p.id == player_id) {
                 return player;
             } else {
-                println!("{}, is not a valid vote", input);
+                println!("{}, is not a valid vote", input.trim());
                 continue;
             }
         }
