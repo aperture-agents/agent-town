@@ -6,6 +6,7 @@
 //!
 
 use std::io;
+use crate::game::state::GamePhase;
 
 /// Role
 ///
@@ -175,7 +176,14 @@ impl Player {
     /// Returns:
     ///     Action: The completed Action for our Role.
     ///
-    pub fn act(&self, players: &Vec<Player>) -> Option<Action> {
+    pub fn act(&self, phase: GamePhase, players: &Vec<Player>) -> Option<Action> {
+        // If were in the voting phase - all players vote
+        if phase == GamePhase::Voting {
+            let target = self.prompt(ActionType::Vote, players);
+
+            return Some(Action::Vote { voter: self.id, candidate: target.id })
+        }
+
         match self.role {
             Role::Villager => None, // Villager has no special action
             Role::Mafia => {

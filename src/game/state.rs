@@ -1,4 +1,12 @@
-//! /src/game/state.rs
+//! /src/game/state.rvoting(&mut self) {
+~                             │    3         // Allow each player to vote
+~                             │    2         let mut votes = Vec::new();
+~                             │    1         for player in &self.players {
+~                             │E 174             votes.push(player.act(self.phase, &self.players));     ■ expected &GamePhase, found GamePhase     ■■■ mismatched types  expected `&GamePhase`, found `GamePh
+~                             │    1         }
+~                             │    2
+~                             │    3         // Tally the votes in a map
+~                             │    4         let mut map = HashMap::new
 //!
 //! State module.
 //!
@@ -8,11 +16,10 @@
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::collections::HashMap;
-use std::hash::Hash;
 use std::io;
 
 use crate::game::chat::Chat;
-use crate::game::player::{Action, ActionType, Player, Role};
+use crate::game::player::{Action, Player, Role};
 
 /// GamePhase
 ///
@@ -24,6 +31,7 @@ use crate::game::player::{Action, ActionType, Player, Role};
 ///     Night: Short Phase when unique roles chose their targets.
 ///     Start: Start of the game, rules and role assignemnts.
 ///
+#[derive(PartialEq, Clone)]
 pub enum GamePhase {
     Start,
     Discussion,
@@ -171,7 +179,7 @@ impl GameState {
         // Allow each player to vote
         let mut votes = Vec::new();
         for player in &self.players {
-            votes.push(player.act(&self.players));
+            votes.push(player.act(self.phase.clone(), &self.players));
         }
 
         // Tally the votes in a map
