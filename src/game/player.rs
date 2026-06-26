@@ -5,8 +5,8 @@
 //! Contains structs and logic related to game players.
 //!
 
-use std::io;
 use crate::game::state::GamePhase;
+use std::io;
 
 /// Role
 ///
@@ -70,7 +70,7 @@ pub enum ActionType {
     Vote,
     Kill,
     Investigate,
-    Save
+    Save,
 }
 
 /// Player
@@ -134,14 +134,29 @@ impl Player {
     pub fn prompt<'a>(&self, action_type: ActionType, players: &'a Vec<Player>) -> &'a Player {
         // Depending on the action display a different prompt
         match action_type {
-            ActionType::Vote => println!("{}, Enter the Player id of the Player you'd like to vote for", self.name),
-            ActionType::Kill => println!("{}, Enter the Player id of the player you'd like to kill", self.name),
-            ActionType::Investigate => println!("{} Enter the player id of the player you'd like to investigate", self.name),
-            ActionType::Save => println!("{}, Enter the player id of the player you'd like to save", self.name),
+            ActionType::Vote => println!(
+                "{}, Enter the Player id of the Player you'd like to vote for",
+                self.name
+            ),
+            ActionType::Kill => println!(
+                "{}, Enter the Player id of the player you'd like to kill",
+                self.name
+            ),
+            ActionType::Investigate => println!(
+                "{} Enter the player id of the player you'd like to investigate",
+                self.name
+            ),
+            ActionType::Save => println!(
+                "{}, Enter the player id of the player you'd like to save",
+                self.name
+            ),
         }
 
         // Create new list of players minus self and dead players so players cannot vote for themselves
-        let votable_players: Vec<&Player> = players.iter().filter(|p| p.id != self.id && p.alive).collect();
+        let votable_players: Vec<&Player> = players
+            .iter()
+            .filter(|p| p.id != self.id && p.alive)
+            .collect();
 
         // Display votable options
         for player in &votable_players {
@@ -193,7 +208,10 @@ impl Player {
         if phase == GamePhase::Voting {
             let target = self.prompt(ActionType::Vote, players);
 
-            return Some(Action::Vote { _voter: self.id, candidate: target.id })
+            return Some(Action::Vote {
+                _voter: self.id,
+                candidate: target.id,
+            });
         }
 
         match self.role {
@@ -205,25 +223,28 @@ impl Player {
                 let target = self.prompt(ActionType::Kill, players);
 
                 Some(Action::Kill {
-                _killer: self.id,
-                victim: target.id,
-            })},
+                    _killer: self.id,
+                    victim: target.id,
+                })
+            }
             Role::Detective => {
                 // Prompt for action
                 let target = self.prompt(ActionType::Investigate, players);
 
                 Some(Action::Investigate {
-                _sleuth: self.id,
-                suspect: target.id,
-            })},
+                    _sleuth: self.id,
+                    suspect: target.id,
+                })
+            }
             Role::Doctor => {
                 // Prompt for action
                 let target = self.prompt(ActionType::Save, players);
 
                 Some(Action::Save {
-                _doctor: self.id,
-                patient: target.id,
-            })},
+                    _doctor: self.id,
+                    patient: target.id,
+                })
+            }
             Role::Unassigned => panic!(), // Shouldnt be possible during a game
         }
     }

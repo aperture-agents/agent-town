@@ -5,9 +5,9 @@
 //! Contains structs and logic related to maintaining the game state.
 //!
 
+use core::panic;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use core::panic;
 use std::collections::HashMap;
 use std::io;
 
@@ -268,7 +268,9 @@ impl GameState {
                     Action::Vote { .. } => (), // There is no voting during night
                     Action::Kill { victim, .. } => *votes.entry(victim).or_insert(0) += 1,
                     Action::Save { patient, .. } => saved_id = Some(patient),
-                    Action::Investigate { suspect: _suspect, .. } => {
+                    Action::Investigate {
+                        suspect: _suspect, ..
+                    } => {
                         // todo!("TODO: ping detective the role of {}", suspect)
                     }
                 }
@@ -403,7 +405,7 @@ fn prompt_players(num_mafia: usize) -> Vec<Player> {
 ///     chat:   The chat instance for this round.
 ///     acts:   The record of actions for this round.
 ///
- #[allow(dead_code)] // TODO: IMPL round history with chat
+#[allow(dead_code)] // TODO: IMPL round history with chat
 pub struct Round {
     chat: Chat,
     acts: Vec<Action>,
