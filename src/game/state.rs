@@ -47,6 +47,7 @@ pub struct GameState {
     pub players: Vec<Player>,
     #[allow(dead_code)] // TODO: IMPL game history with chat
     pub prev_rounds: Vec<Round>,
+    #[allow(dead_code)] // TODO: IMPL round history with chat
     pub curr_round: Round,
     pub num_mafia: usize,
 }
@@ -267,7 +268,7 @@ impl GameState {
                     Action::Vote { .. } => (), // There is no voting during night
                     Action::Kill { victim, .. } => *votes.entry(victim).or_insert(0) += 1,
                     Action::Save { patient, .. } => saved_id = Some(patient),
-                    Action::Investigate { suspect, .. } => {
+                    Action::Investigate { suspect: _suspect, .. } => {
                         // todo!("TODO: ping detective the role of {}", suspect)
                     }
                 }
@@ -402,6 +403,7 @@ fn prompt_players(num_mafia: usize) -> Vec<Player> {
 ///     chat:   The chat instance for this round.
 ///     acts:   The record of actions for this round.
 ///
+ #[allow(dead_code)] // TODO: IMPL round history with chat
 pub struct Round {
     chat: Chat,
     acts: Vec<Action>,

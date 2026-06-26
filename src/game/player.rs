@@ -51,10 +51,10 @@ impl std::fmt::Display for Role {
 ///     Save: Doctor Action for saving a player from a mafia kill.
 ///
 pub enum Action {
-    Vote { voter: usize, candidate: usize },
-    Kill { killer: usize, victim: usize },
-    Investigate { sleuth: usize, suspect: usize },
-    Save { doctor: usize, patient: usize },
+    Vote { _voter: usize, candidate: usize },
+    Kill { _killer: usize, victim: usize },
+    Investigate { _sleuth: usize, suspect: usize },
+    Save { _doctor: usize, patient: usize },
 }
 
 /// ActionType
@@ -193,7 +193,7 @@ impl Player {
         if phase == GamePhase::Voting {
             let target = self.prompt(ActionType::Vote, players);
 
-            return Some(Action::Vote { voter: self.id, candidate: target.id })
+            return Some(Action::Vote { _voter: self.id, candidate: target.id })
         }
 
         match self.role {
@@ -205,7 +205,7 @@ impl Player {
                 let target = self.prompt(ActionType::Kill, players);
 
                 Some(Action::Kill {
-                killer: self.id,
+                _killer: self.id,
                 victim: target.id,
             })},
             Role::Detective => {
@@ -213,7 +213,7 @@ impl Player {
                 let target = self.prompt(ActionType::Investigate, players);
 
                 Some(Action::Investigate {
-                sleuth: self.id,
+                _sleuth: self.id,
                 suspect: target.id,
             })},
             Role::Doctor => {
@@ -221,7 +221,7 @@ impl Player {
                 let target = self.prompt(ActionType::Save, players);
 
                 Some(Action::Save {
-                doctor: self.id,
+                _doctor: self.id,
                 patient: target.id,
             })},
             Role::Unassigned => panic!(), // Shouldnt be possible during a game
