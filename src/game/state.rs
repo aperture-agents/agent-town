@@ -77,10 +77,10 @@ impl GameState {
 
         Self {
             phase: GamePhase::Start,
-            players: players,
+            players,
             prev_rounds: Vec::new(),
             curr_round: Round::new(),
-            num_mafia: num_mafia,
+            num_mafia,
         }
     }
 
@@ -240,11 +240,11 @@ impl GameState {
 
         // return result of game
         if mafia_alive >= good_alive {
-            return Some(Role::Mafia);
+            Some(Role::Mafia)
         } else if mafia_alive == 0 {
-            return Some(Role::Villager);
+            Some(Role::Villager)
         } else {
-            return None;
+            None
         }
     }
 

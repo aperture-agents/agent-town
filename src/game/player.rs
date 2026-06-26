@@ -131,7 +131,7 @@ impl Player {
     /// Returns:
     ///  Player voted for or None if no vote.
     ///
-    pub fn prompt<'a>(&self, action_type: ActionType, players: &'a Vec<Player>) -> &'a Player {
+    pub fn prompt<'a>(&self, action_type: ActionType, players: &'a [Player]) -> &'a Player {
         // Depending on the action display a different prompt
         match action_type {
             ActionType::Vote => println!(
@@ -203,7 +203,7 @@ impl Player {
     /// Returns:
     ///     Action: The completed Action for our Role.
     ///
-    pub fn act(&self, phase: GamePhase, players: &Vec<Player>) -> Option<Action> {
+    pub fn act(&self, phase: GamePhase, players: &[Player]) -> Option<Action> {
         // If were in the voting phase - all players vote
         if phase == GamePhase::Voting {
             let target = self.prompt(ActionType::Vote, players);
