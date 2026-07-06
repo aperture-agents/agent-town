@@ -93,6 +93,9 @@ impl GameState {
     ///     - start Discussion Phase.
     ///
     pub fn start_game(&mut self) {
+        // Revive all players
+        self.players.iter_mut().for_each(|p| p.alive = true);
+
         // Assign all players roles
         self.assign_roles();
 
