@@ -175,8 +175,12 @@ impl GameState {
     pub fn start_voting(&mut self) {
         // Allow each player to vote
         let mut votes = Vec::new();
+
         for player in &self.players {
-            votes.push(player.act(self.phase.clone(), &self.players));
+            // Ensure the acting player is alive
+            if player.alive {
+                votes.push(player.act(self.phase.clone(), &self.players));
+            }
         }
 
         // Tally the votes in a map
@@ -262,6 +266,7 @@ impl GameState {
 
         // Allow all alive players to act if they have a special night action.
         for player in &self.players {
+            // if a player is dead - they cannot act
             if !player.alive {
                 continue;
             }

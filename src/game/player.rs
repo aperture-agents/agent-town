@@ -196,14 +196,21 @@ impl Player {
     ///
     /// ex: Villager votes, Doctor saves, etc.
     /// Players should not be able to act on themselves.
+    /// Dead players should not be able to act.
     ///
     /// Args:
-    ///     target: Player to target with our action.
+    ///     phase: current game phase.
+    ///     players: available players to vote with.
     ///
     /// Returns:
     ///     Action: The completed Action for our Role.
     ///
     pub fn act(&self, phase: GamePhase, players: &[Player]) -> Option<Action> {
+        // Skip if self is not alive
+        if !self.alive {
+            return None;
+        }
+
         // If were in the voting phase - all players vote
         if phase == GamePhase::Voting {
             let target = self.prompt(ActionType::Vote, players);
