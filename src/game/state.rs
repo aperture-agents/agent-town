@@ -24,7 +24,7 @@ use crate::game::player::{Action, Player, Role};
 ///     Night: Short Phase when unique roles chose their targets.
 ///     Start: Start of the game, rules and role assignemnts.
 ///
-#[derive(PartialEq, Clone)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum GamePhase {
     Start,
     Discussion,
@@ -156,10 +156,14 @@ impl GameState {
     /// Once this discussion time is over players will vote.
     ///
     pub fn start_discussion(&mut self) {
+        // TODO: turn-based or free-form discussion once chat I/O is wired for players
         // TODO: Largely a chat item here
         // TODO: Ping all players to begin discussing
         // TODO: Maintain the chat
         // TODO: Start a timer maybe 60 seconds
+        self.curr_round
+            .chat
+            .system("Discussion begins.".into(), GamePhase::Discussion);
 
         // Begin voting
         self.phase = GamePhase::Voting;
@@ -179,7 +183,7 @@ impl GameState {
         for player in &self.players {
             // Ensure the acting player is alive
             if player.alive {
-                votes.push(player.act(self.phase.clone(), &self.players));
+                votes.push(player.act(self.phase, &self.players));
             }
         }
 
@@ -192,20 +196,23 @@ impl GameState {
         }
 
         // Announce a death if there is one and kill the player
-        let death = map.iter().max_by_key(|(_, v)| *v);
+        let death = map.iter().max_by_key(|(_, v)| *v).map(|(id, n)| (*id, *n));
         if let Some((id, votes)) = death {
             let dead_player = self
                 .players
                 .iter_mut()
-                .find(|p| p.id == *id)
+                .find(|p| p.id == id)
                 .expect("Failed to find dead player - BUG");
-            println!(
+            let text = format!(
                 "Player {} received {} votes, and is eliminated, they were {}.",
                 dead_player.name, votes, dead_player.role
             );
             dead_player.kill();
+            self.curr_round.chat.system(text, GamePhase::Voting);
         } else {
-            println!("No one was voted out...");
+            self.curr_round
+                .chat
+                .system("No one was voted out...".into(), GamePhase::Voting);
         }
 
         // Check if the game should end
@@ -271,7 +278,7 @@ impl GameState {
                 continue;
             }
 
-            if let Some(action) = player.act(self.phase.clone(), &self.players) {
+            if let Some(action) = player.act(self.phase, &self.players) {
                 match action {
                     Action::Vote { .. } => (), // There is no voting during night
                     Action::Kill { victim, .. } => *votes.entry(victim).or_insert(0) += 1,
@@ -288,18 +295,32 @@ impl GameState {
         // Tally Mafia votes and extract their id
         let dead_player_id = votes.iter().max_by_key(|(_, v)| *v).map(|(id, _)| *id);
 
-        // Check if we should kill a player
-        if saved_id != dead_player_id {
-            // Find the player and kill them
-            if let Some(dead_id) = dead_player_id {
+        // kill unless doctor saved the target; announce outcome on chat
+        let killed_name = if saved_id != dead_player_id {
+            dead_player_id.map(|dead_id| {
                 let player = self
                     .players
                     .iter_mut()
                     .find(|p| p.id == dead_id)
                     .expect("Should find player");
-                player.kill()
-            }
-        }
+                let name = player.name.clone();
+                player.kill();
+                name
+            })
+        } else {
+            None
+        };
+
+        match killed_name {
+            Some(name) => self.curr_round.chat.system(
+                format!("{name} was killed during the night."),
+                GamePhase::Night,
+            ),
+            None => self
+                .curr_round
+                .chat
+                .system("No one died during the night.".into(), GamePhase::Night),
+        };
 
         // Check if the games over
         if self.is_game_over().is_some() {
@@ -320,8 +341,18 @@ impl GameState {
         let win = self.is_game_over();
 
         match win {
-            Some(Role::Villager) => println!("All Mafia were voted out - Villagers win!"),
-            Some(Role::Mafia) => println!("The Mafia have secured quorum - Mafia win!"),
+            Some(Role::Villager) => {
+                self.curr_round.chat.system(
+                    "All Mafia were voted out - Villagers win!".into(),
+                    GamePhase::GameOver,
+                );
+            }
+            Some(Role::Mafia) => {
+                self.curr_round.chat.system(
+                    "The Mafia have secured quorum - Mafia win!".into(),
+                    GamePhase::GameOver,
+                );
+            }
             _ => panic!("Game ended incorrectly - BUG"),
         }
 
