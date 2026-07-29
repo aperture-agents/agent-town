@@ -10,7 +10,7 @@ use crate::game::state::GamePhase;
 /// whether a chat entry is player speech or a system/event line.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MessageKind {
-    /// player speech; used once discussion I/O calls [`Chat::send`].
+    /// player speech; used once discussion I/O calls [`Chat::speech`].
     #[allow(dead_code)]
     Speech,
     System,
@@ -59,7 +59,7 @@ impl Chat {
 
     /// player speech, broadcast to all subscribers and append to log.
     #[allow(dead_code)] // discussion I/O not wired yet
-    pub fn send(&mut self, sender: usize, text: String, phase: GamePhase) -> &Message {
+    pub fn speech(&mut self, sender: usize, text: String, phase: GamePhase) -> &Message {
         let id = self.alloc_id();
         self.broadcast(Message {
             id,
@@ -123,7 +123,7 @@ mod tests {
     use std::rc::Rc;
 
     #[test]
-    fn send_and_system_append_and_notify() {
+    fn speech_and_system_append_and_notify() {
         let mut chat = Chat {
             messages: Vec::new(),
             next_id: 0,
@@ -135,7 +135,7 @@ mod tests {
             move |msg| seen.borrow_mut().push(msg.clone())
         });
 
-        chat.send(1, "hello".into(), GamePhase::Discussion);
+        chat.speech(1, "hello".into(), GamePhase::Discussion);
         chat.system("night falls".into(), GamePhase::Night);
 
         assert_eq!(chat.messages().len(), 2);

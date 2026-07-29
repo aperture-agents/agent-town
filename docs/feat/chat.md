@@ -3,7 +3,7 @@
 something like:
 
 ```
-  player or game -> send/system -> chat ->  append message to log
+  player or game -> speech/system -> chat ->  append message to log
                                         |-> notify -> hooks/print/state?
 ```
 
