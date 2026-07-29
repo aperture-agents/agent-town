@@ -16,13 +16,19 @@ pub enum MessageKind {
     System,
 }
 
+/// who produced a chat message.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Sender {
+    System,
+    Player(usize),
+}
+
 /// one entry in log
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Message {
     pub id: usize,
     pub kind: MessageKind,
-    /// `Some(player_id)` for speech, `None` for system
-    pub sender: Option<usize>,
+    pub sender: Sender,
     pub text: String,
     /// phase when message was recorded, if known
     pub phase: Option<GamePhase>,
@@ -44,12 +50,9 @@ impl Chat {
             next_id: 0,
             hooks: Vec::new(),
         };
-        chat.subscribe(|msg| match msg.kind {
-            MessageKind::Speech => match msg.sender {
-                Some(id) => println!("[P{id}] {}", msg.text),
-                None => println!("{}", msg.text),
-            },
-            MessageKind::System => println!("* {}", msg.text),
+        chat.subscribe(|msg| match msg.sender {
+            Sender::Player(id) => println!("[P{id}] {}", msg.text),
+            Sender::System => println!("* {}", msg.text),
         });
         chat
     }
@@ -61,7 +64,7 @@ impl Chat {
         self.broadcast(Message {
             id,
             kind: MessageKind::Speech,
-            sender: Some(sender),
+            sender: Sender::Player(sender),
             text,
             phase,
         })
@@ -73,7 +76,7 @@ impl Chat {
         self.broadcast(Message {
             id,
             kind: MessageKind::System,
-            sender: None,
+            sender: Sender::System,
             text,
             phase,
         })
@@ -137,8 +140,9 @@ mod tests {
 
         assert_eq!(chat.messages().len(), 2);
         assert_eq!(chat.messages()[0].kind, MessageKind::Speech);
-        assert_eq!(chat.messages()[0].sender, Some(1));
+        assert_eq!(chat.messages()[0].sender, Sender::Player(1));
         assert_eq!(chat.messages()[1].kind, MessageKind::System);
+        assert_eq!(chat.messages()[1].sender, Sender::System);
         assert_eq!(seen.borrow().len(), 2);
     }
 }
