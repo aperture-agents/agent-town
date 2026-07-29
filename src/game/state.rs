@@ -316,10 +316,10 @@ impl GameState {
                 format!("{name} was killed during the night."),
                 GamePhase::Night,
             ),
-            None => self.curr_round.chat.system(
-                "No one died during the night.".into(),
-                GamePhase::Night,
-            ),
+            None => self
+                .curr_round
+                .chat
+                .system("No one died during the night.".into(), GamePhase::Night),
         };
 
         // Check if the games over
