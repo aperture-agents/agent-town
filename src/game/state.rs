@@ -163,7 +163,7 @@ impl GameState {
         // TODO: Start a timer maybe 60 seconds
         self.curr_round
             .chat
-            .system("Discussion begins.".into(), Some(GamePhase::Discussion));
+            .system("Discussion begins.".into(), GamePhase::Discussion);
 
         // Begin voting
         self.phase = GamePhase::Voting;
@@ -208,11 +208,11 @@ impl GameState {
                 dead_player.name, votes, dead_player.role
             );
             dead_player.kill();
-            self.curr_round.chat.system(text, Some(GamePhase::Voting));
+            self.curr_round.chat.system(text, GamePhase::Voting);
         } else {
             self.curr_round
                 .chat
-                .system("No one was voted out...".into(), Some(GamePhase::Voting));
+                .system("No one was voted out...".into(), GamePhase::Voting);
         }
 
         // Check if the game should end
@@ -314,11 +314,11 @@ impl GameState {
         match killed_name {
             Some(name) => self.curr_round.chat.system(
                 format!("{name} was killed during the night."),
-                Some(GamePhase::Night),
+                GamePhase::Night,
             ),
             None => self.curr_round.chat.system(
                 "No one died during the night.".into(),
-                Some(GamePhase::Night),
+                GamePhase::Night,
             ),
         };
 
@@ -344,13 +344,13 @@ impl GameState {
             Some(Role::Villager) => {
                 self.curr_round.chat.system(
                     "All Mafia were voted out - Villagers win!".into(),
-                    Some(GamePhase::GameOver),
+                    GamePhase::GameOver,
                 );
             }
             Some(Role::Mafia) => {
                 self.curr_round.chat.system(
                     "The Mafia have secured quorum - Mafia win!".into(),
-                    Some(GamePhase::GameOver),
+                    GamePhase::GameOver,
                 );
             }
             _ => panic!("Game ended incorrectly - BUG"),

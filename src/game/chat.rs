@@ -30,8 +30,8 @@ pub struct Message {
     pub kind: MessageKind,
     pub sender: Sender,
     pub text: String,
-    /// phase when message was recorded, if known
-    pub phase: Option<GamePhase>,
+    /// phase when the message was recorded
+    pub phase: GamePhase,
 }
 
 type MessageHook = Box<dyn FnMut(&Message)>;
@@ -59,7 +59,7 @@ impl Chat {
 
     /// player speech, broadcast to all subscribers and append to log.
     #[allow(dead_code)] // discussion I/O not wired yet
-    pub fn send(&mut self, sender: usize, text: String, phase: Option<GamePhase>) -> &Message {
+    pub fn send(&mut self, sender: usize, text: String, phase: GamePhase) -> &Message {
         let id = self.alloc_id();
         self.broadcast(Message {
             id,
@@ -71,7 +71,7 @@ impl Chat {
     }
 
     /// system/event line, broadcast to all subscribers and append to log.
-    pub fn system(&mut self, text: String, phase: Option<GamePhase>) -> &Message {
+    pub fn system(&mut self, text: String, phase: GamePhase) -> &Message {
         let id = self.alloc_id();
         self.broadcast(Message {
             id,
@@ -135,8 +135,8 @@ mod tests {
             move |msg| seen.borrow_mut().push(msg.clone())
         });
 
-        chat.send(1, "hello".into(), Some(GamePhase::Discussion));
-        chat.system("night falls".into(), Some(GamePhase::Night));
+        chat.send(1, "hello".into(), GamePhase::Discussion);
+        chat.system("night falls".into(), GamePhase::Night);
 
         assert_eq!(chat.messages().len(), 2);
         assert_eq!(chat.messages()[0].kind, MessageKind::Speech);

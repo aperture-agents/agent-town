@@ -14,6 +14,6 @@ where Message:
 - kind: MessageKind
 - sender: Sender { System | Player(id) }
 - text: String
-- phase: Option<GamePhase> this makes history self-describing, there's really no need for timestamps
+- phase: GamePhase - makes history self-describing, no need for timestamps
 
 
